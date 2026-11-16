@@ -1,0 +1,26 @@
+# Godot cache and local editor/user data
+.godot/
+/android/
+/Godot/
+# Generated exports and tool caches
+/build/*
+!/build/.gdignore
+/dist/
+/node_modules/
+/.cache/
+/.wrangler/
+# Local credentials: never commit
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+export_credentials.cfg
+*.pem
+*.key
+*.p12
+*.pfx
+# OS/editor temporary files
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
