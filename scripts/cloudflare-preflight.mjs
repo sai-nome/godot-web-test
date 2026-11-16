@@ -1,0 +1,18 @@
+import { readFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const config = JSON.parse(await readFile('wrangler.jsonc', 'utf8'));
+assert.equal(config.name, 'godot-web-test');
+assert.ok(!('routes' in config) && !('route' in config), 'DNS/routes require separate human approval');
+assert.equal(config.main, 'worker/index.js');
+assert.ok(!config.kv_namespaces && !config.r2_buckets, 'No external storage');
+assert.equal(process.env.CLOUDFLARE_FREE_PLAN_CONFIRMED, 'true', 'Confirm Workers Free plan before deployment; paid plans require separate approval');
+const token = process.env.CLOUDFLARE_API_TOKEN;
+const account = process.env.CLOUDFLARE_ACCOUNT_ID;
+assert.ok(token && account, 'Set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID securely');
+assert.match(account, /^[a-f0-9]{32}$/i, 'Invalid account ID');
+const response = await fetch('https://api.cloudflare.com/client/v4/accounts/' + account + '/workers/scripts', { headers: { Authorization: 'Bearer ' + token } });
+const data = await response.json();
+assert.ok(response.ok && data.success && Array.isArray(data.result), 'Cannot verify Worker list; stopping before deploy');
+const exists = data.result.some(worker => worker.id === config.name);
+assert.ok(!exists || process.env.CLOUDFLARE_WORKER_CREATED_FOR_THIS_REPO === 'true', 'Worker godot-web-test already exists. Stop: verify it was created for this repository before allowing updates.');
+console.log(exists ? 'Dedicated Worker updates explicitly enabled' : 'Worker name is unused; safe to create dedicated static Worker');

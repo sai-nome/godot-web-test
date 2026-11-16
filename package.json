@@ -1,0 +1,23 @@
+{
+  "name": "godot-web-test",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "verify:project": "node scripts/verify-project.mjs",
+    "prepare:web": "node scripts/prepare-web.mjs",
+    "check:assets": "node scripts/check-assets.mjs",
+    "preview": "wrangler dev",
+    "deploy:check": "wrangler deploy --dry-run",
+    "deploy": "node scripts/cloudflare-preflight.mjs && wrangler deploy",
+    "postinstall": "node scripts/ignore-tools.mjs",
+    "test:serving": "node scripts/test-serving.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "4.162.0",
+    "miniflare": "5.20261113.0-beta"
+  }
+}

@@ -1,0 +1,82 @@
+name: Build and deploy Godot Web
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: godot-web-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GODOT_VERSION: 4.7.2
+  WRANGLER_SEND_METRICS: 'false'
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install pinned deployment tools
+        run: npm ci --no-audit --no-fund
+      - name: Verify export requirements
+        run: npm run verify:project
+      - name: Install official Godot and Web release template
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          base="https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable"
+          curl --fail --location --retry 3 "$base/Godot_v4.7.2-stable_linux.x86_64.zip" -o godot.zip
+          curl --fail --location --retry 3 "$base/Godot_v4.7.2-stable_export_templates.tpz" -o templates.tpz
+          echo 'cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4  godot.zip' | sha256sum -c -
+          echo 'f298490b8d44d934be425a5a65a51bf15f422428b229a06a6e11d9ffea248011  templates.tpz' | sha256sum -c -
+          unzip -q godot.zip -d godot-bin
+          chmod +x godot-bin/Godot_v4.7.2-stable_linux.x86_64
+          echo "$RUNNER_TEMP/godot-bin" >> "$GITHUB_PATH"
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          unzip -j -q templates.tpz templates/web_nothreads_release.zip -d "$HOME/.local/share/godot/export_templates/4.7.2.stable"
+      - name: Import and export Web release
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/web
+          Godot_v4.7.2-stable_linux.x86_64 --headless --path . --editor --import --quit
+          Godot_v4.7.2-stable_linux.x86_64 --headless --path . --export-release Web build/web/index.html
+      - name: Compress WASM and check free-tier asset limits
+        run: npm run prepare:web
+      - name: Test gzip response in Workers runtime
+        run: npm run test:serving
+      - name: Validate Wrangler configuration without publishing
+        run: npm run deploy:check
+      - name: Save deployable files and size report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: godot-web-${{ github.sha }}
+          path: |
+            dist/
+            build/asset-report.json
+          retention-days: 3
+      # Enable after confirming this is a new, dedicated Worker.
+      # No routes or custom domains: CI does not change DNS.
+      - name: Deploy dedicated Worker
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.CLOUDFLARE_DEPLOY_ENABLED == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_FREE_PLAN_CONFIRMED: ${{ vars.CLOUDFLARE_FREE_PLAN_CONFIRMED }}
+          CLOUDFLARE_WORKER_CREATED_FOR_THIS_REPO: ${{ vars.CLOUDFLARE_WORKER_CREATED_FOR_THIS_REPO }}
+        run: npm run deploy
+      - name: Report deployment disabled
+        if: vars.CLOUDFLARE_DEPLOY_ENABLED != 'true'
+        run: echo 'Build checked. Deployment disabled until Cloudflare credentials and dedicated Worker checks are ready.' >> "$GITHUB_STEP_SUMMARY"
