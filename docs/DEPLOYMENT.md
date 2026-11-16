@@ -18,8 +18,9 @@ DNS変更は別作業として内容を確認し、承認を得てから実施�
 - WASM原本: 39,514,754 bytes（37.68 MiB）。25 MiBを超過する。
 - gzip版: 10,153,810 bytes（9.68 MiB）。全配信ファイルが上限内。
 - WorkersローカルランタイムでHTTP取得、gzip展開後の原本一致、WASMコンパイル、HTML取得、404を検証済み。
-- Wrangler deploy --dry-runはこの端末の実行制限（親フォルダー参照拒否）により失敗。CIにも検査を組み込んでいる。CI上での実行成功はまだ未確認。
-- GitHubリポジトリ作成・Push、Actions本番実行、Cloudflare本番デプロイ、DNS接続、公開後のブラウザー操作は未完了。
+- Wrangler deploy --dry-runはこの端末の実行制限で失敗したが、GitHub Actions上では成功。Webビルド・容量検査・Workers配信テスト・成果物保存も成功。
+- GitHubへのソース反映とローカルmainの同期が完了。検証済みのActions実行: https://github.com/sai-nome/godot-web-test/actions/runs/43884236850
+- Cloudflareデプロイは意図的に無効で、Actionsでもスキップ。Cloudflare本番デプロイ、DNS接続、公開後のブラウザー操作は未完了。
 
 | ファイル | 元のWeb出力 bytes | 配信 bytes |
 | --- | ---: | ---: |
