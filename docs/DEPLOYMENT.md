@@ -20,7 +20,10 @@ DNS変更は別作業として内容を確認し、承認を得てから実施�
 - WorkersローカルランタイムでHTTP取得、gzip展開後の原本一致、WASMコンパイル、HTML取得、404を検証済み。
 - Wrangler deploy --dry-runはこの端末の実行制限で失敗したが、GitHub Actions上では成功。Webビルド・容量検査・Workers配信テスト・成果物保存も成功。
 - GitHubへのソース反映とローカルmainの同期が完了。検証済みのActions実行: https://github.com/sai-nome/godot-web-test/actions/runs/43884236850
-- Cloudflareデプロイは意図的に無効で、Actionsでもスキップ。Cloudflare本番デプロイ、DNS接続、公開後のブラウザー操作は未完了。
+- Cloudflare初回デプロイ成功: https://github.com/sai-nome/godot-web-test/actions/runs/43891494498
+- 公開済みURL: https://godot-web-test.beeskynohito.workers.dev/ 。HTML/PCKのHTTP 200と、WASMのHTTP 200・MIME・gzip展開後の原本一致・コンパイル成功を確認。
+- CLOUDFLARE_WORKER_CREATED_FOR_THIS_REPO=trueを登録済み。以後mainへのPushで今回作成した専用Workerを更新する。
+- testgame.xainome.blogのDNS接続は承認待ち。ブラウザー操作ツールに接続できないため、画面表示・キー操作の実機確認は未完了。
 
 | ファイル | 元のWeb出力 bytes | 配信 bytes |
 | --- | ---: | ---: |

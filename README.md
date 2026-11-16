@@ -43,6 +43,7 @@ Godot 4.7.2のWebリリースビルドとWorkersローカルランタイムで�
 
 ## GitHub / Cloudflare Workers公開
 
-公開予定URLは https://testgame.xainome.blog です。現時点では未公開です。
+公開済みURLは https://godot-web-test.beeskynohito.workers.dev/ です。
+予定の独自ドメイン https://testgame.xainome.blog はDNS接続待ちです。
 ビルド・容量制限・認証・DNS承認・公開確認は [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) を参照してください。
-既存のHugoブログは変更しません。GitHub Actionsは初期状態でデプロイ無効です。
+既存のHugoブログは変更しません。GitHub Actionsのデプロイは有効で、mainへのPushで専用Workerを更新します。
